@@ -69,8 +69,8 @@ nav {
   padding: 5rem 2rem 4rem;
   position: relative;
   background:
-    linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(100,20,20,0.35) 50%, rgba(0,0,0,0.75) 100%),
-    url('images/redcampus.jpeg') center 35%/cover no-repeat;
+    linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(100,20,20,0.3) 50%, rgba(0,0,0,0.75) 100%),
+    url('/images/redcampus.jpeg') center 25%/cover no-repeat;
 }
 .hero-eyebrow {
   background: var(--gold);

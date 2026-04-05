@@ -1,4 +1,4 @@
-/* ── NAVIGATION ── */
+/* -- NAVIGATION -- */
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
@@ -13,7 +13,7 @@ document.querySelector('.nav-hamburger').addEventListener('click', () => {
   document.querySelector('.nav-links').classList.toggle('open');
 });
 
-/* ── COUNTDOWN ── */
+/* -- COUNTDOWN -- */
 function updateCountdown() {
   const target = new Date('2026-08-14T19:00:00');
   const now = new Date();
@@ -34,11 +34,11 @@ function updateCountdown() {
 updateCountdown();
 setInterval(updateCountdown, 1000);
 
-/* ── EVENTS ── */
+/* -- EVENTS -- */
 let events = [
-  { id: 1, name: 'Welcome Reception', month: 'Aug', day: 14, year: 2026, timeloc: '7:00 PM · Judson High School — Original Red Campus Grounds', desc: 'Start the reunion weekend right! Drinks, appetizers, and a video slideshow of our greatest '90s moments. Bring your old yearbook and your best stories.' },
-  { id: 2, name: 'Main Reunion Dinner & Dance', month: 'Aug', day: 15, year: 2026, timeloc: '6:30 PM · San Antonio Marriott Northwest, 9821 Colonnade Blvd', desc: 'The big night — dinner, dancing, and the crowning of our 30-year class awards. Business casual attire. Cash bar available. DJ spinning the hits of \'96.' },
-  { id: 3, name: 'Sunday Farewell Brunch', month: 'Aug', day: 16, year: 2026, timeloc: '10:30 AM · Bill Miller Bar-B-Q, Converse', desc: 'A casual farewell brunch before everyone heads home. Come as you are, bring the whole family, and let\'s close out the weekend with some good Texas BBQ.' }
+  { id: 1, name: 'Welcome Reception', month: 'Aug', day: 14, year: 2026, timeloc: '7:00 PM - Judson High School - Original Red Campus Grounds', desc: 'Start the reunion weekend right! Drinks, appetizers, and a video slideshow of our greatest moments from the class of 96. Bring your old yearbook and your best stories.' },
+  { id: 2, name: 'Main Reunion Dinner & Dance', month: 'Aug', day: 15, year: 2026, timeloc: '6:30 PM - San Antonio Marriott Northwest, 9821 Colonnade Blvd', desc: 'The big night -- dinner, dancing, and the crowning of our 30-year class awards. Business casual attire. Cash bar available. DJ spinning the hits of 96.' },
+  { id: 3, name: 'Sunday Farewell Brunch', month: 'Aug', day: 16, year: 2026, timeloc: '10:30 AM - Bill Miller Bar-B-Q, Converse', desc: 'A casual farewell brunch before everyone heads home. Come as you are, bring the whole family, and lets close out the weekend with some good Texas BBQ.' }
 ];
 let editingEventId = null;
 let nextEventId = 100;
@@ -115,7 +115,7 @@ function deleteEvent(id) {
   showToast('Event removed.');
 }
 
-/* ── RSVP ── */
+/* -- RSVP -- */
 let rsvps = [
   { name: 'Maria Gonzalez', location: 'San Antonio, TX', guests: 2, attending: 'yes' },
   { name: 'Derek Williams', location: 'Austin, TX', guests: 1, attending: 'yes' },
@@ -163,7 +163,7 @@ function submitRsvp() {
   showToast(`Thanks, ${name.split(' ')[0]}! Your RSVP has been saved. 🎉`);
 }
 
-/* ── CLASS UPDATES ── */
+/* -- CLASS UPDATES -- */
 let updates = [
   { name: 'Sandra Okonkwo', location: 'Dallas, TX', date: 'March 2026', text: 'Can\'t believe it\'s been 30 years! I\'m now a pediatric nurse at Baylor and mom of three. Still listening to TLC and thinking about you all. So excited for the reunion!' },
   { name: 'Marcus Lee', location: 'San Antonio, TX', date: 'February 2026', text: 'Running my own landscaping company here in SA. Married 22 years to my high school sweetheart (yes, from Judson!). See everyone in August!' },
@@ -200,7 +200,7 @@ function submitUpdate() {
   showToast(`Update posted, ${name.split(' ')[0]}! 🚀`);
 }
 
-/* ── PHOTOS ── */
+/* -- PHOTOS -- */
 let photos = [
   { name: 'Red Campus — Class of \'96', uploader: 'Admin', url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&q=75' },
   { name: 'Rockets Football 1995', uploader: 'Admin', url: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&q=75' },
@@ -240,7 +240,7 @@ function handleUpload(e) {
   e.target.value = '';
 }
 
-/* ── MODAL HELPERS ── */
+/* -- MODAL HELPERS -- */
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
@@ -250,7 +250,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
-/* ── TOAST ── */
+/* -- TOAST -- */
 let toastTimer;
 function showToast(msg) {
   clearTimeout(toastTimer);
@@ -260,7 +260,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-/* ── INIT ── */
+/* -- INIT -- */
 renderEvents();
 renderRsvps();
 renderUpdates();

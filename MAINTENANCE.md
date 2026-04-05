@@ -59,7 +59,8 @@ sudo nano /var/www/html/php/config.php
 
 ## Database Access
 ```bash
-mysql -u jhs96user -p'REDACTED' jhs96
+mysql -u jhs96user -p jhs96
+# Enter your DB password when prompted
 ```
 Tables: `events`, `rsvps`, `updates_feed`, `photos`
 
@@ -107,5 +108,5 @@ sudo systemctl restart apache2
 df -h
 
 # MySQL backup
-mysqldump -u jhs96user -p'REDACTED' jhs96 > ~/jhs96-backup-$(date +%Y%m%d).sql
+mysqldump -u jhs96user -p jhs96 > ~/jhs96-backup-$(date +%Y%m%d).sql
 ```

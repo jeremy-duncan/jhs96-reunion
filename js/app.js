@@ -15,7 +15,7 @@ document.querySelector('.nav-hamburger').addEventListener('click', () => {
 
 /* -- COUNTDOWN -- */
 function updateCountdown() {
-  const target = new Date('2026-08-14T19:00:00');
+  const target = new Date('2026-09-05T12:00:00');
   const now = new Date();
   const diff = target - now;
   if (diff <= 0) {
@@ -36,9 +36,9 @@ setInterval(updateCountdown, 1000);
 
 /* -- EVENTS -- */
 let events = [
-  { id: 1, name: 'Welcome Reception', month: 'Aug', day: 14, year: 2026, timeloc: '7:00 PM - Judson High School - Original Red Campus Grounds', desc: 'Start the reunion weekend right! Drinks, appetizers, and a video slideshow of our greatest moments from the class of 96. Bring your old yearbook and your best stories.' },
-  { id: 2, name: 'Main Reunion Dinner & Dance', month: 'Aug', day: 15, year: 2026, timeloc: '6:30 PM - San Antonio Marriott Northwest, 9821 Colonnade Blvd', desc: 'The big night -- dinner, dancing, and the crowning of our 30-year class awards. Business casual attire. Cash bar available. DJ spinning the hits of 96.' },
-  { id: 3, name: 'Sunday Farewell Brunch', month: 'Aug', day: 16, year: 2026, timeloc: '10:30 AM - Bill Miller Bar-B-Q, Converse', desc: 'A casual farewell brunch before everyone heads home. Come as you are, bring the whole family, and lets close out the weekend with some good Texas BBQ.' }
+  { id: 1, name: 'Welcome Reception', month: 'Sep', day: 5, year: 2026, timeloc: '12:00 PM - Judson High School - Original Red Campus Grounds', desc: 'Start the reunion weekend right! Drinks, appetizers, and a video slideshow of our greatest moments from the class of 96. Bring your old yearbook and your best stories.' },
+  { id: 2, name: 'Main Reunion Dinner & Dance', month: 'Sep', day: 6, year: 2026, timeloc: '6:30 PM - San Antonio Marriott Northwest, 9821 Colonnade Blvd', desc: 'The big night -- dinner, dancing, and the crowning of our 30-year class awards. Business casual attire. Cash bar available. DJ spinning the hits of 96.' },
+  { id: 3, name: 'Sunday Farewell Brunch', month: 'Sep', day: 7, year: 2026, timeloc: '10:30 AM - Bill Miller Bar-B-Q, Converse', desc: 'A casual farewell brunch before everyone heads home. Come as you are, bring the whole family, and lets close out the weekend with some good Texas BBQ.' }
 ];
 let editingEventId = null;
 let nextEventId = 100;

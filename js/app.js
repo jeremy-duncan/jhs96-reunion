@@ -174,6 +174,25 @@ async function submitUpdate() {
   } catch(e) { showToast('Connection error. Please try again.'); }
 }
 
+/* -- LIGHTBOX -- */
+function openLightbox(url, caption) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox-img').alt = caption;
+  document.getElementById('lightbox-caption').textContent = caption;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightbox-img').src = '';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
 /* -- PHOTOS -- */
 async function loadPhotos() {
   try {
@@ -189,7 +208,7 @@ async function loadPhotos() {
     ];
     const all = (Array.isArray(photos) && photos.length > 0) ? photos : defaults;
     grid.innerHTML = all.map(p => `
-      <div class="photo-card">
+      <div class="photo-card" onclick="openLightbox('${esc(p.url)}', '${esc(p.caption || 'Photo')}')" style="cursor:zoom-in;">
         <img src="${esc(p.url)}" alt="${esc(p.caption || '')}" loading="lazy">
         <div class="photo-caption">
           <strong>${esc(p.caption || 'Photo')}</strong>

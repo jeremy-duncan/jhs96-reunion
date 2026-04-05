@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judson High School — Class of 1996 — 30th Reunion</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════════════════ -->
+<nav>
+  <a class="nav-logo" href="#" onclick="showPage('home')">JHS '96 &nbsp;·&nbsp; 30th Reunion</a>
+  <div class="nav-links">
+    <a data-page="home"    onclick="showPage('home')"    class="active">Home</a>
+    <a data-page="events"  onclick="showPage('events')">Events</a>
+    <a data-page="rsvp"    onclick="showPage('rsvp')">RSVP</a>
+    <a data-page="updates" onclick="showPage('updates')">Class Updates</a>
+    <a data-page="photos"  onclick="showPage('photos')">Photos</a>
+  </div>
+  <button class="nav-hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <div class="hero">
+    <div class="hero-eyebrow">Class of 1996 &nbsp;·&nbsp; Converse, Texas</div>
+    <h1>Judson High School<br><em>30th Reunion</em></h1>
+    <p class="hero-sub">Come home to the Red Campus — let's celebrate how far we've flown.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('rsvp')">RSVP Now</button>
+      <button class="btn-outline" onclick="showPage('events')">See Events</button>
+    </div>
+  </div>
+
+  <div class="countdown-strip" id="countdown-strip">
+    <div class="countdown-unit"><span class="countdown-num" id="cd-d">--</span><span class="countdown-label">Days</span></div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-h">--</span><span class="countdown-label">Hours</span></div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-m">--</span><span class="countdown-label">Minutes</span></div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-s">--</span><span class="countdown-label">Seconds</span></div>
+  </div>
+
+  <div class="content-wrap">
+    <div class="section-head">
+      <h2>Welcome Back, Rockets! 🚀</h2>
+      <div class="section-rule"></div>
+      <p>It's been 30 years since we walked the halls of the Red Campus. Time to reconnect.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <h3>About the Reunion</h3>
+        <p>Thirty years ago, we crossed that stage in caps and gowns and headed out into the world. Now it's time to come back, share our stories, and celebrate the Class of 1996 — one of the greatest classes Judson ever produced. The Red Campus may be gone, but our memories live on.</p>
+      </div>
+      <div class="about-card">
+        <h3>Get Involved</h3>
+        <p>RSVP so we know you're coming, post a class update to share what you've been up to, upload your old photos to the gallery, and spread the word to classmates you're still in touch with. Let's make this a reunion worth the 30-year wait!</p>
+      </div>
+      <div class="about-card">
+        <h3>The Red Campus</h3>
+        <p>Our beloved Red Campus was razed in 2011 to make way for new athletic fields. But for the Class of '96 — the juniors and seniors who called it home — those red brick hallways are unforgettable. Share your Red Campus photos in our gallery to keep those memories alive.</p>
+      </div>
+      <div class="about-card">
+        <h3>Questions?</h3>
+        <p>Reach out to the reunion committee at <a href="mailto:jhs96reunion@gmail.com" style="color: var(--crimson);">jhs96reunion@gmail.com</a>. We'll be updating this site as plans come together, so check back often for new details on events, activities, and logistics.</p>
+      </div>
+    </div>
+
+    <div class="rocket-banner">
+      <h3>🏈 Rocket Pride Never Fades</h3>
+      <p>Judson Rockets — 30 years of living, growing, and making our hometown proud.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     EVENTS PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-events">
+  <div class="content-wrap">
+    <div class="section-head">
+      <h2>Reunion Events</h2>
+      <div class="section-rule"></div>
+      <p>Three days of memories, laughter, and reconnecting with classmates. All events subject to change — check back for updates.</p>
+    </div>
+
+    <div class="events-list" id="events-list"></div>
+
+    <div class="btn-add-event">
+      <button class="btn-primary" onclick="openAddEvent()">+ Add Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     RSVP PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-rsvp">
+  <div class="content-wrap">
+    <div class="section-head">
+      <h2>RSVP</h2>
+      <div class="section-rule"></div>
+      <p>Let us know you're coming! Your response helps the committee plan food, space, and seating.</p>
+    </div>
+
+    <div class="rsvp-wrap">
+      <div class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="rsvp-name" placeholder="Your name (or maiden name)">
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="rsvp-email" placeholder="your@email.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>City, State</label>
+            <input type="text" id="rsvp-location" placeholder="e.g. San Antonio, TX">
+          </div>
+          <div class="form-group">
+            <label>Number of Guests</label>
+            <select id="rsvp-guests">
+              <option value="1">Just me</option>
+              <option value="2">2 (me + 1)</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5+</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Attending?</label>
+          <select id="rsvp-attending">
+            <option value="yes">Yes, I'll be there! 🎉</option>
+            <option value="maybe">Maybe — I'll try to make it</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>A Note for Your Classmates (optional)</label>
+          <textarea id="rsvp-note" placeholder="Share a quick hello, a memory, or what you've been up to..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitRsvp()" style="width: 100%;">Submit RSVP</button>
+      </div>
+
+      <!-- RSVP Stats -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2rem 0 1.5rem;">
+        <div style="background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center;">
+          <div style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--crimson);" id="rsvp-count-yes">0</div>
+          <div style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Attending</div>
+        </div>
+        <div style="background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center;">
+          <div style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold);" id="rsvp-count-maybe">0</div>
+          <div style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Maybe</div>
+        </div>
+        <div style="background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center;">
+          <div style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--dark);" id="rsvp-count-guests">0</div>
+          <div style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Total Guests</div>
+        </div>
+      </div>
+
+      <div class="rsvp-list" id="rsvp-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CLASS UPDATES PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-updates">
+  <div class="content-wrap-wide">
+    <div class="section-head">
+      <h2>Class Updates</h2>
+      <div class="section-rule"></div>
+      <p>Share what you've been up to! Where are you living, what do you do, what are you proud of?</p>
+    </div>
+
+    <div class="updates-layout">
+      <div class="updates-feed" id="updates-feed"></div>
+
+      <div class="update-form-card">
+        <h3>Share Your Update</h3>
+        <div class="form-group">
+          <label>Your Name *</label>
+          <input type="text" id="upd-name" placeholder="Full name (or maiden name)">
+        </div>
+        <div class="form-group">
+          <label>Where are you now?</label>
+          <input type="text" id="upd-location" placeholder="City, State">
+        </div>
+        <div class="form-group">
+          <label>Your Update *</label>
+          <textarea id="upd-text" style="height: 120px;" placeholder="What have you been up to the last 30 years? Where are you living, working, what are you proud of? Say hello to your classmates!"></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitUpdate()" style="width: 100%;">Post Update 🚀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHOTOS PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-photos">
+  <div class="content-wrap-wide">
+    <div class="section-head">
+      <h2>Photo Gallery</h2>
+      <div class="section-rule"></div>
+      <p>Share your memories! Upload old Red Campus photos, yearbook pics, prom night shots, or your current family photo. The more the merrier.</p>
+    </div>
+
+    <div class="upload-zone" onclick="document.getElementById('photo-upload').click()">
+      <span class="upload-icon">📷</span>
+      <p><strong>Click to upload your photos</strong></p>
+      <p style="margin-top: 6px; font-size: 0.82rem; color: #aaa;">JPG, PNG, GIF accepted &nbsp;·&nbsp; Multiple files OK</p>
+      <input type="file" id="photo-upload" accept="image/*" multiple onchange="handleUpload(event)" style="display: none;">
+    </div>
+
+    <div class="photo-grid" id="photo-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Event Edit/Add Modal -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-box">
+    <h3 id="event-modal-title">Edit Event</h3>
+    <div class="form-group">
+      <label>Event Name *</label>
+      <input type="text" id="ev-name" placeholder="e.g. Friday Night Mixer">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Month *</label>
+        <input type="text" id="ev-month" placeholder="e.g. Aug" maxlength="3">
+      </div>
+      <div class="form-group">
+        <label>Day *</label>
+        <input type="number" id="ev-day" placeholder="14" min="1" max="31">
+      </div>
+      <div class="form-group">
+        <label>Year</label>
+        <input type="number" id="ev-year" placeholder="2026">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Time &amp; Location</label>
+      <input type="text" id="ev-timeloc" placeholder="e.g. 7:00 PM · The Marriott Ballroom">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="ev-desc" placeholder="Details about this event..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel-sm" onclick="closeModal('event-modal')">Cancel</button>
+      <button class="btn-save-sm" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>Judson High School &nbsp;·&nbsp; <span>Class of 1996</span> &nbsp;·&nbsp; 30th Reunion &nbsp;·&nbsp; Converse, Texas<br>
+  <span style="font-size: 0.75rem; opacity: 0.5; margin-top: 6px; display: block;">Questions? Contact the reunion committee at jhs96reunion@gmail.com</span></p>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

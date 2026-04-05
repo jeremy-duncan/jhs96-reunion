@@ -1,18 +1,14 @@
 Options -Indexes
 RewriteEngine On
 
-# Block .git directory entirely
-RewriteRule ^\.git(/.*)?$ - [F,L]
+# Block .git directory
+RewriteRule ^\.git - [F,L]
+RewriteRule ^\.git/ - [F,L]
+RewriteRule ^\.env - [F,L]
 
-# Block other sensitive paths
-RewriteRule ^\.env(.*)$ - [F,L]
-
-# SPA routing - send everything to index.html unless real file/dir
+# SPA routing - only rewrite if not a real file/dir
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/php/
-RewriteCond %{REQUEST_URI} !^/uploads/
-RewriteCond %{REQUEST_URI} !^/admin/
 RewriteRule ^(.*)$ /index.html [L]
 
 # Security headers
@@ -21,19 +17,14 @@ Header always set X-Frame-Options "SAMEORIGIN"
 Header always set X-XSS-Protection "1; mode=block"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 Header always unset X-Powered-By
 Header always unset Server
 
-# Prevent direct access to sensitive files
-<FilesMatch "\.(sql|sh|log|env|md|gitignore|gitattributes)$">
+# Block sensitive files
+<FilesMatch "\.(sql|sh|log|env|gitignore|gitattributes)$">
     Require all denied
 </FilesMatch>
-
-# Block .git and hidden directories
-<DirectoryMatch "^.*/\.git">
-    Require all denied
-</DirectoryMatch>
 
 # Cache static assets
 <FilesMatch "\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|woff2)$">

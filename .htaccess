@@ -1,0 +1,24 @@
+Options -Indexes
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.html [L]
+
+# Security headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+Header always unset X-Powered-By
+Header always unset Server
+
+# Prevent access to sensitive files
+<FilesMatch "\.(sql|sh|log|env|git|md)$">
+    Require all denied
+</FilesMatch>
+
+# Cache static assets
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|woff2)$">
+    Header set Cache-Control "max-age=2592000, public"
+</FilesMatch>

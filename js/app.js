@@ -1,5 +1,12 @@
 const API = '/php/api.php';
 
+/* -- XSS SANITIZATION -- always use this for any user content rendered to DOM */
+function esc(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str || '')));
+  return d.innerHTML;
+}
+
 /* -- NAVIGATION -- */
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -54,34 +61,36 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 function initials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  return String(name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
 /* -- EVENTS -- */
 let editingEventId = null;
 
 async function loadEvents() {
-  const res = await fetch(API + '?action=get_events');
-  const events = await res.json();
-  const list = document.getElementById('events-list');
-  if (!list) return;
-  list.innerHTML = events.map(ev => `
-    <div class="event-card" id="event-${ev.id}">
-      <div class="event-datebox">
-        <div class="ev-month">${ev.month}</div>
-        <div class="ev-day">${ev.day}</div>
-        <div class="ev-year">${ev.year}</div>
-      </div>
-      <div class="event-body">
-        <h3>${ev.name}</h3>
-        <div class="event-meta">${ev.timeloc}</div>
-        <p>${ev.description}</p>
-      </div>
-      <div class="event-actions">
-        <button class="btn-edit" onclick='openEditEvent(${JSON.stringify(ev)})'>Edit</button>
-        <button class="btn-delete" onclick="deleteEvent(${ev.id})">Remove</button>
-      </div>
-    </div>`).join('');
+  try {
+    const res = await fetch(API + '?action=get_events');
+    const events = await res.json();
+    const list = document.getElementById('events-list');
+    if (!list) return;
+    list.innerHTML = events.map(ev => `
+      <div class="event-card" id="event-${parseInt(ev.id)}">
+        <div class="event-datebox">
+          <div class="ev-month">${esc(ev.month)}</div>
+          <div class="ev-day">${parseInt(ev.day)}</div>
+          <div class="ev-year">${parseInt(ev.year)}</div>
+        </div>
+        <div class="event-body">
+          <h3>${esc(ev.name)}</h3>
+          <div class="event-meta">${esc(ev.timeloc)}</div>
+          <p>${esc(ev.description)}</p>
+        </div>
+        <div class="event-actions">
+          <button class="btn-edit" onclick='openEditEvent(${JSON.stringify({id:ev.id,name:ev.name,month:ev.month,day:ev.day,year:ev.year,timeloc:ev.timeloc,description:ev.description})})'>Edit</button>
+          <button class="btn-delete" onclick="deleteEvent(${parseInt(ev.id)})">Remove</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error('loadEvents:', e); }
 }
 
 function openAddEvent() {
@@ -131,22 +140,24 @@ async function deleteEvent(id) {
 
 /* -- RSVP -- */
 async function loadRsvps() {
-  const res = await fetch(API + '?action=get_rsvps');
-  const d = await res.json();
-  document.getElementById('rsvp-count-yes').textContent = d.yes;
-  document.getElementById('rsvp-count-maybe').textContent = d.maybe;
-  document.getElementById('rsvp-count-guests').textContent = d.guests;
-  const list = document.getElementById('rsvp-list');
-  if (!list) return;
-  list.innerHTML = d.rsvps.map(r => `
-    <div class="rsvp-item">
-      <div class="rsvp-avatar">${initials(r.name)}</div>
-      <div class="rsvp-info">
-        <strong>${r.name}</strong>
-        <span>${r.location || ''}${r.guests > 1 ? ' - ' + r.guests + ' guests' : ''}</span>
-      </div>
-      <div class="rsvp-badge ${r.attending === 'maybe' ? 'maybe' : ''}">${r.attending === 'yes' ? 'Attending' : 'Maybe'}</div>
-    </div>`).join('');
+  try {
+    const res = await fetch(API + '?action=get_rsvps');
+    const d = await res.json();
+    document.getElementById('rsvp-count-yes').textContent = parseInt(d.yes) || 0;
+    document.getElementById('rsvp-count-maybe').textContent = parseInt(d.maybe) || 0;
+    document.getElementById('rsvp-count-guests').textContent = parseInt(d.guests) || 0;
+    const list = document.getElementById('rsvp-list');
+    if (!list) return;
+    list.innerHTML = (d.rsvps || []).map(r => `
+      <div class="rsvp-item">
+        <div class="rsvp-avatar">${esc(initials(r.name))}</div>
+        <div class="rsvp-info">
+          <strong>${esc(r.name)}</strong>
+          <span>${esc(r.location || '')}${r.guests > 1 ? ' - ' + parseInt(r.guests) + ' guests' : ''}</span>
+        </div>
+        <div class="rsvp-badge ${r.attending === 'maybe' ? 'maybe' : ''}">${r.attending === 'yes' ? 'Attending' : 'Maybe'}</div>
+      </div>`).join('');
+  } catch(e) { console.error('loadRsvps:', e); }
 }
 
 async function submitRsvp() {
@@ -160,86 +171,105 @@ async function submitRsvp() {
     attending: document.getElementById('rsvp-attending').value,
     note: document.getElementById('rsvp-note').value.trim()
   };
-  const res = await fetch(API + '?action=submit_rsvp', { method: 'POST', body: JSON.stringify(data) });
-  const result = await res.json();
-  if (result.ok) {
-    ['rsvp-name','rsvp-email','rsvp-location','rsvp-note'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('rsvp-guests').value = '1';
-    document.getElementById('rsvp-attending').value = 'yes';
-    loadRsvps();
-    showToast('Thanks ' + name.split(' ')[0] + '! Your RSVP has been saved!');
-  } else {
-    showToast(result.error || 'Something went wrong.');
-  }
+  try {
+    const res = await fetch(API + '?action=submit_rsvp', { method: 'POST', body: JSON.stringify(data) });
+    const result = await res.json();
+    if (result.ok) {
+      ['rsvp-name','rsvp-email','rsvp-location','rsvp-note'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('rsvp-guests').value = '1';
+      document.getElementById('rsvp-attending').value = 'yes';
+      loadRsvps();
+      showToast('Thanks ' + name.split(' ')[0] + '! Your RSVP has been saved!');
+    } else {
+      showToast(result.error || 'Something went wrong.');
+    }
+  } catch(e) { showToast('Connection error. Please try again.'); }
 }
 
 /* -- CLASS UPDATES -- */
 async function loadUpdates() {
-  const res = await fetch(API + '?action=get_updates');
-  const rows = await res.json();
-  const feed = document.getElementById('updates-feed');
-  if (!feed) return;
-  feed.innerHTML = rows.map(u => `
-    <div class="update-card">
-      <div class="update-header">
-        <div class="update-avatar">${initials(u.name)}</div>
-        <div class="update-meta">
-          <strong>${u.name}</strong>
-          <span>${u.location || ''} - ${new Date(u.created_at).toLocaleDateString('en-US', {month:'long', year:'numeric'})}</span>
+  try {
+    const res = await fetch(API + '?action=get_updates');
+    const rows = await res.json();
+    const feed = document.getElementById('updates-feed');
+    if (!feed) return;
+    feed.innerHTML = (rows || []).map(u => `
+      <div class="update-card">
+        <div class="update-header">
+          <div class="update-avatar">${esc(initials(u.name))}</div>
+          <div class="update-meta">
+            <strong>${esc(u.name)}</strong>
+            <span>${esc(u.location || '')} - ${new Date(u.created_at).toLocaleDateString('en-US', {month:'long', year:'numeric'})}</span>
+          </div>
         </div>
-      </div>
-      <p>${u.body}</p>
-    </div>`).join('');
+        <p>${esc(u.body)}</p>
+      </div>`).join('');
+  } catch(e) { console.error('loadUpdates:', e); }
 }
 
 async function submitUpdate() {
   const name = document.getElementById('upd-name').value.trim();
   const body = document.getElementById('upd-text').value.trim();
   if (!name || !body) { showToast('Please enter your name and update.'); return; }
+  if (body.length > 1000) { showToast('Update is too long (max 1000 characters).'); return; }
   const data = { name, location: document.getElementById('upd-location').value.trim(), body };
-  const res = await fetch(API + '?action=submit_update', { method: 'POST', body: JSON.stringify(data) });
-  const result = await res.json();
-  if (result.ok) {
-    ['upd-name','upd-location','upd-text'].forEach(id => document.getElementById(id).value = '');
-    loadUpdates();
-    showToast('Update posted ' + name.split(' ')[0] + '!');
-  }
+  try {
+    const res = await fetch(API + '?action=submit_update', { method: 'POST', body: JSON.stringify(data) });
+    const result = await res.json();
+    if (result.ok) {
+      ['upd-name','upd-location','upd-text'].forEach(id => document.getElementById(id).value = '');
+      loadUpdates();
+      showToast('Update posted ' + name.split(' ')[0] + '!');
+    } else {
+      showToast(result.error || 'Something went wrong.');
+    }
+  } catch(e) { showToast('Connection error. Please try again.'); }
 }
 
 /* -- PHOTOS -- */
 async function loadPhotos() {
-  const res = await fetch(API + '?action=get_photos');
-  const photos = await res.json();
-  const grid = document.getElementById('photo-grid');
-  if (!grid) return;
-  const defaults = [
-    { url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&q=75', caption: "Red Campus - Class of 96", uploader: 'Admin' },
-    { url: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&q=75', caption: 'Rockets Football 1995', uploader: 'Admin' },
-    { url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&q=75', caption: 'Senior Week 1996', uploader: 'Admin' },
-    { url: 'https://images.unsplash.com/photo-1540479859555-17af45c78602?w=600&q=75', caption: "Prom Night 96", uploader: 'Admin' }
-  ];
-  const all = photos.length > 0 ? photos : defaults;
-  grid.innerHTML = all.map(p => `
-    <div class="photo-card">
-      <img src="${p.url}" alt="${p.caption || ''}" loading="lazy">
-      <div class="photo-caption">
-        <strong>${p.caption || 'Photo'}</strong>
-        <span>Shared by ${p.uploader || 'Classmate'}</span>
-      </div>
-    </div>`).join('');
+  try {
+    const res = await fetch(API + '?action=get_photos');
+    const photos = await res.json();
+    const grid = document.getElementById('photo-grid');
+    if (!grid) return;
+    const defaults = [
+      { url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&q=75', caption: 'Red Campus - Class of 96', uploader: 'Admin' },
+      { url: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&q=75', caption: 'Rockets Football 1995', uploader: 'Admin' },
+      { url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&q=75', caption: 'Senior Week 1996', uploader: 'Admin' },
+      { url: 'https://images.unsplash.com/photo-1540479859555-17af45c78602?w=600&q=75', caption: 'Prom Night 96', uploader: 'Admin' }
+    ];
+    const all = (Array.isArray(photos) && photos.length > 0) ? photos : defaults;
+    grid.innerHTML = all.map(p => `
+      <div class="photo-card">
+        <img src="${esc(p.url)}" alt="${esc(p.caption || '')}" loading="lazy">
+        <div class="photo-caption">
+          <strong>${esc(p.caption || 'Photo')}</strong>
+          <span>Shared by ${esc(p.uploader || 'Classmate')}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error('loadPhotos:', e); }
 }
 
 async function handleUpload(e) {
   const files = Array.from(e.target.files);
   if (!files.length) return;
+  const allowed = ['image/jpeg','image/png','image/gif','image/webp'];
+  for (const file of files) {
+    if (!allowed.includes(file.type)) { showToast('Only JPG, PNG, GIF and WebP allowed.'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('Max file size is 10MB.'); return; }
+  }
+  showToast('Uploading...');
   let uploaded = 0;
   for (const file of files) {
     const formData = new FormData();
     formData.append('photo', file);
     formData.append('caption', file.name.replace(/\.[^/.]+$/, ''));
-    formData.append('uploader', 'You');
-    await fetch(API + '?action=upload_photo', { method: 'POST', body: formData });
-    uploaded++;
+    formData.append('uploader', 'Classmate');
+    try {
+      await fetch(API + '?action=upload_photo', { method: 'POST', body: formData });
+      uploaded++;
+    } catch(e) { console.error('upload error:', e); }
   }
   e.target.value = '';
   loadPhotos();

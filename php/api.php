@@ -54,17 +54,6 @@ function sanitize_str($val, $max = 255) {
     return mb_substr(strip_tags(trim((string)($val ?? ''))), 0, $max);
 }
 
-function json_response($data, $code = 200) {
-    http_response_code($code);
-    header('Content-Type: application/json');
-    echo json_encode($data);
-    exit;
-}
-
-function is_admin() {
-    return isset($_SESSION['admin']) && $_SESSION['admin'] === true;
-}
-
 $action = $_GET['action'] ?? '';
 
 switch ($action) {

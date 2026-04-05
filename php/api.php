@@ -64,6 +64,8 @@ switch ($action) {
         json_response($rows);
 
     case 'save_event':
+        session_start();
+        if (!is_admin()) json_response(['error' => 'Unauthorized'], 401);
         $d = get_json();
         $name    = sanitize_str($d['name'] ?? '', 255);
         $month   = sanitize_str($d['month'] ?? '', 3);
@@ -82,6 +84,8 @@ switch ($action) {
         json_response(['ok' => true]);
 
     case 'delete_event':
+        session_start();
+        if (!is_admin()) json_response(['error' => 'Unauthorized'], 401);
         $d = get_json();
         db()->prepare('DELETE FROM events WHERE id=?')->execute([(int)$d['id']]);
         json_response(['ok' => true]);

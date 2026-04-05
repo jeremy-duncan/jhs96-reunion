@@ -64,9 +64,6 @@ function initials(name) {
   return String(name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-/* -- EVENTS -- */
-let editingEventId = null;
-
 async function loadEvents() {
   try {
     const res = await fetch(API + '?action=get_events');
@@ -85,57 +82,8 @@ async function loadEvents() {
           <div class="event-meta">${esc(ev.timeloc)}</div>
           <p>${esc(ev.description)}</p>
         </div>
-        <div class="event-actions">
-          <button class="btn-edit" onclick='openEditEvent(${JSON.stringify({id:ev.id,name:ev.name,month:ev.month,day:ev.day,year:ev.year,timeloc:ev.timeloc,description:ev.description})})'>Edit</button>
-          <button class="btn-delete" onclick="deleteEvent(${parseInt(ev.id)})">Remove</button>
-        </div>
       </div>`).join('');
   } catch(e) { console.error('loadEvents:', e); }
-}
-
-function openAddEvent() {
-  editingEventId = null;
-  document.getElementById('event-modal-title').textContent = 'Add New Event';
-  ['ev-name','ev-month','ev-day','ev-year','ev-timeloc','ev-desc'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  openModal('event-modal');
-}
-
-function openEditEvent(ev) {
-  editingEventId = ev.id;
-  document.getElementById('event-modal-title').textContent = 'Edit Event';
-  document.getElementById('ev-name').value = ev.name;
-  document.getElementById('ev-month').value = ev.month;
-  document.getElementById('ev-day').value = ev.day;
-  document.getElementById('ev-year').value = ev.year;
-  document.getElementById('ev-timeloc').value = ev.timeloc;
-  document.getElementById('ev-desc').value = ev.description;
-  openModal('event-modal');
-}
-
-async function saveEvent() {
-  const data = {
-    id: editingEventId,
-    name: document.getElementById('ev-name').value.trim(),
-    month: document.getElementById('ev-month').value.trim(),
-    day: parseInt(document.getElementById('ev-day').value),
-    year: parseInt(document.getElementById('ev-year').value) || 2026,
-    timeloc: document.getElementById('ev-timeloc').value.trim(),
-    desc: document.getElementById('ev-desc').value.trim()
-  };
-  if (!data.name || !data.month || !data.day) { alert('Please fill in name, month, and day.'); return; }
-  await fetch(API + '?action=save_event', { method: 'POST', body: JSON.stringify(data) });
-  closeModal('event-modal');
-  loadEvents();
-  showToast(editingEventId ? 'Event updated!' : 'Event added!');
-}
-
-async function deleteEvent(id) {
-  if (!confirm('Remove this event?')) return;
-  await fetch(API + '?action=delete_event', { method: 'POST', body: JSON.stringify({ id }) });
-  loadEvents();
-  showToast('Event removed.');
 }
 
 /* -- RSVP -- */

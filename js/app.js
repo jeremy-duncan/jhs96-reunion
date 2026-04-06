@@ -220,27 +220,62 @@ async function loadPhotos() {
 
 async function handleUpload(e) {
   const files = Array.from(e.target.files);
-  if (!files.length) return;
-  const allowed = ['image/jpeg','image/png','image/gif','image/webp'];
+  console.log('[upload] Files selected:', files.length, files.map(f => f.name + ' (' + f.type + ', ' + (f.size/1024).toFixed(1) + 'KB)'));
+  if (!files.length) { console.log('[upload] No files selected, aborting'); return; }
+
+  const allowed_types = ['image/jpeg','image/png','image/gif','image/webp'];
+  const allowed_exts  = ['jpg','jpeg','png','gif','webp'];
   for (const file of files) {
-    if (!allowed.includes(file.type)) { showToast('Only JPG, PNG, GIF and WebP allowed.'); return; }
-    if (file.size > 10 * 1024 * 1024) { showToast('Max file size is 10MB.'); return; }
+    console.log('[upload] Checking file:', file.name, '| type:', file.type, '| size:', file.size, 'bytes');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const typeOk = allowed_types.includes(file.type);
+    const extOk  = allowed_exts.includes(ext);
+    if (!typeOk && !extOk) {
+      console.warn('[upload] REJECTED - neither type nor extension allowed. type:', file.type, 'ext:', ext);
+      showToast('Only JPG, PNG, GIF and WebP allowed. Got: ' + (file.type || ext));
+      return;
+    }
+    if (!typeOk) console.warn('[upload] NOTE: MIME type is', file.type, 'but extension is .' + ext + ' - server will verify');
+    if (file.size > 10 * 1024 * 1024) {
+      console.warn('[upload] REJECTED - file too large:', file.size, 'bytes (max 10MB)');
+      showToast('Max file size is 10MB. File is ' + (file.size/1024/1024).toFixed(1) + 'MB');
+      return;
+    }
+    console.log('[upload] File passed frontend checks:', file.name);
   }
-  showToast('Uploading...');
+
+  showToast('Uploading ' + files.length + ' photo' + (files.length > 1 ? 's' : '') + '...');
   let uploaded = 0;
   for (const file of files) {
     const formData = new FormData();
     formData.append('photo', file);
     formData.append('caption', file.name.replace(/\.[^/.]+$/, ''));
     formData.append('uploader', 'Classmate');
+    console.log('[upload] POSTing file:', file.name, 'as caption:', file.name.replace(/\.[^/.]+$/, ''));
     try {
-      await fetch(API + '?action=upload_photo', { method: 'POST', body: formData });
-      uploaded++;
-    } catch(e) { console.error('upload error:', e); }
+      const res = await fetch(API + '?action=upload_photo', { method: 'POST', body: formData });
+      const result = await res.json();
+      console.log('[upload] Server response for', file.name, ':', res.status, result);
+      if (result.log) result.log.forEach(l => console.log(l));
+      if (result.ok) {
+        uploaded++;
+        console.log('[upload] SUCCESS:', file.name, '-> URL:', result.url);
+      } else {
+        console.error('[upload] FAILED:', file.name, '-> error:', result.error);
+        showToast('Upload failed: ' + (result.error || 'Unknown error'));
+        if (result.log) console.table(result.log);
+      }
+    } catch(err) {
+      console.error('[upload] Network/fetch error for', file.name, ':', err);
+      showToast('Connection error during upload. Check console for details.');
+    }
   }
   e.target.value = '';
-  loadPhotos();
-  showToast(uploaded + ' photo' + (uploaded > 1 ? 's' : '') + ' uploaded!');
+  if (uploaded > 0) {
+    loadPhotos();
+    showToast(uploaded + ' photo' + (uploaded > 1 ? 's' : '') + ' uploaded!');
+    console.log('[upload] Complete -', uploaded, 'of', files.length, 'uploaded successfully');
+  }
 }
 
 /* -- INIT -- */

@@ -157,28 +157,103 @@ switch ($action) {
         json_response($rows);
 
     case 'upload_photo':
-        // Rate limit: 10 photo uploads per IP per hour
+        $log = [];
+        $log[] = '[upload_photo] Request received from IP: ' . get_ip();
+
+        // Rate limit check
         rate_limit('photo_' . get_ip(), 10, 3600);
-        if (empty($_FILES['photo'])) json_response(['error' => 'No file received'], 400);
-        $file    = $_FILES['photo'];
-        $allowed_types = ['image/jpeg','image/png','image/gif','image/webp'];
-        $allowed_exts  = ['jpg','jpeg','png','gif','webp'];
-        // Verify MIME type from actual file content, not just extension
+        $log[] = '[upload_photo] Rate limit passed';
+
+        // Check file was received
+        if (empty($_FILES['photo'])) {
+            error_log(implode(' | ', $log) . ' | ERROR: No file received');
+            json_response(['error' => 'No file received', 'log' => $log], 400);
+        }
+
+        $file = $_FILES['photo'];
+        $log[] = '[upload_photo] File received: name=' . $file['name']
+               . ' size=' . $file['size'] . ' bytes'
+               . ' tmp_name=' . $file['tmp_name']
+               . ' upload_error=' . $file['error'];
+
+        // Check for PHP upload errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $upload_errors = [
+                UPLOAD_ERR_INI_SIZE   => 'File exceeds upload_max_filesize in php.ini',
+                UPLOAD_ERR_FORM_SIZE  => 'File exceeds MAX_FILE_SIZE in form',
+                UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE    => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temp folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write to disk',
+                UPLOAD_ERR_EXTENSION  => 'Upload stopped by PHP extension',
+            ];
+            $msg = $upload_errors[$file['error']] ?? 'Unknown upload error code: ' . $file['error'];
+            $log[] = '[upload_photo] ERROR: PHP upload error - ' . $msg;
+            error_log(implode(' | ', $log));
+            json_response(['error' => $msg, 'log' => $log], 400);
+        }
+        $log[] = '[upload_photo] No PHP upload errors';
+
+        // Size check
+        $max_size = 10 * 1024 * 1024;
+        if ($file['size'] > $max_size) {
+            $log[] = '[upload_photo] ERROR: File too large - ' . $file['size'] . ' bytes (max ' . $max_size . ')';
+            error_log(implode(' | ', $log));
+            json_response(['error' => 'File too large (max 10MB)', 'log' => $log], 400);
+        }
+        $log[] = '[upload_photo] Size check passed: ' . $file['size'] . ' bytes';
+
+        // Detect real MIME type from file contents (not filename)
+        $allowed_types = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime  = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
-        if (!in_array($mime, $allowed_types)) json_response(['error' => 'Invalid file type'], 400);
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, $allowed_exts)) json_response(['error' => 'Invalid file extension'], 400);
-        if ($file['size'] > 10 * 1024 * 1024) json_response(['error' => 'File too large (max 10MB)'], 400);
-        if (!is_dir(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0755, true);
+        $log[] = '[upload_photo] Detected MIME type: ' . $mime . ' | Original filename: ' . $file['name'];
+
+        if (!isset($allowed_types[$mime])) {
+            $log[] = '[upload_photo] ERROR: MIME type not allowed - ' . $mime;
+            error_log(implode(' | ', $log));
+            json_response(['error' => 'Invalid file type: ' . $mime . ' (allowed: jpeg, png, gif, webp)', 'log' => $log], 400);
+        }
+
+        // Use extension derived from actual MIME type (fixes mismatched extensions like .png on a JPEG)
+        $ext = $allowed_types[$mime];
+        $orig_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($orig_ext !== $ext) {
+            $log[] = '[upload_photo] NOTE: Extension mismatch - filename says .' . $orig_ext . ' but file is actually ' . $mime . ' - using .' . $ext;
+        }
+        $log[] = '[upload_photo] MIME and extension checks passed - using ext: ' . $ext;
+
+        // Ensure upload directory exists
+        if (!is_dir(UPLOAD_DIR)) {
+            mkdir(UPLOAD_DIR, 0755, true);
+            $log[] = '[upload_photo] Created upload directory: ' . UPLOAD_DIR;
+        }
+        $log[] = '[upload_photo] Upload dir exists: ' . UPLOAD_DIR . ' writable=' . (is_writable(UPLOAD_DIR) ? 'yes' : 'NO');
+
+        // Generate safe random filename
         $filename = bin2hex(random_bytes(16)) . '.' . $ext;
-        move_uploaded_file($file['tmp_name'], UPLOAD_DIR . $filename);
+        $dest     = UPLOAD_DIR . $filename;
+        $log[] = '[upload_photo] Destination path: ' . $dest;
+
+        // Move file
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            $log[] = '[upload_photo] ERROR: move_uploaded_file failed';
+            error_log(implode(' | ', $log));
+            json_response(['error' => 'Failed to save file', 'log' => $log], 500);
+        }
+        $log[] = '[upload_photo] File saved successfully';
+
+        // Save to database
         $caption  = sanitize_str($_POST['caption'] ?? '', 255);
         $uploader = sanitize_str($_POST['uploader'] ?? 'Classmate', 100);
+        $log[] = '[upload_photo] Saving to DB - caption: ' . $caption . ' uploader: ' . $uploader;
         $s = db()->prepare('INSERT INTO photos (caption,uploader,filename) VALUES (?,?,?)');
         $s->execute([$caption, $uploader, $filename]);
-        json_response(['ok' => true, 'url' => '/uploads/' . $filename]);
+        $log[] = '[upload_photo] DB insert successful - photo ID: ' . db()->lastInsertId();
+
+        error_log(implode(' | ', $log));
+        json_response(['ok' => true, 'url' => '/uploads/' . $filename, 'log' => $log]);
 
     case 'delete_photo':
         session_start();

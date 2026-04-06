@@ -20,6 +20,13 @@ header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 
+/* -- SYSLOG HELPER -- */
+function jhs_log($level, $message) {
+    openlog('jhs96-reunion', LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+    syslog($level, $message);
+    closelog();
+}
+
 /* -- RATE LIMITING -- */
 function rate_limit($key, $max, $window_seconds) {
     $file = sys_get_temp_dir() . '/rl_' . md5($key) . '.json';
@@ -31,6 +38,7 @@ function rate_limit($key, $max, $window_seconds) {
     // Remove expired entries
     $data = array_filter($data, fn($t) => $t > $now - $window_seconds);
     if (count($data) >= $max) {
+        jhs_log(LOG_WARNING, '[rate_limit] BLOCKED key: ' . $key . ' attempts: ' . count($data) . ' limit: ' . $max);
         json_response(['error' => 'Too many requests. Please wait a moment and try again.'], 429);
     }
     $data[] = $now;
@@ -113,6 +121,7 @@ switch ($action) {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_response(['error' => 'Invalid email address'], 400);
         $s = db()->prepare('INSERT INTO rsvps (name,email,location,guests,attending,note) VALUES (?,?,?,?,?,?)');
         $s->execute([$name,$email,$loc,$guests,$attending,$note]);
+        jhs_log(LOG_INFO, '[submit_rsvp] New RSVP from IP: ' . get_ip() . ' name: ' . $name . ' attending: ' . $attending);
         json_response(['ok' => true]);
 
     case 'delete_rsvp':
@@ -120,6 +129,7 @@ switch ($action) {
         if (!is_admin()) json_response(['error' => 'Unauthorized'], 401);
         $d = get_json();
         db()->prepare('DELETE FROM rsvps WHERE id=?')->execute([(int)$d['id']]);
+        jhs_log(LOG_NOTICE, '[delete_rsvp] Admin deleted RSVP id: ' . (int)$d['id'] . ' from IP: ' . get_ip());
         json_response(['ok' => true]);
 
     /* -- CLASS UPDATES -- */
@@ -137,6 +147,7 @@ switch ($action) {
         if (!$name || !$body) json_response(['error' => 'Name and update required'], 400);
         $s = db()->prepare('INSERT INTO updates_feed (name,location,body) VALUES (?,?,?)');
         $s->execute([$name,$loc,$body]);
+        jhs_log(LOG_INFO, '[submit_update] New update from IP: ' . get_ip() . ' name: ' . $name);
         json_response(['ok' => true]);
 
     case 'delete_update':
@@ -144,6 +155,7 @@ switch ($action) {
         if (!is_admin()) json_response(['error' => 'Unauthorized'], 401);
         $d = get_json();
         db()->prepare('DELETE FROM updates_feed WHERE id=?')->execute([(int)$d['id']]);
+        jhs_log(LOG_NOTICE, '[delete_update] Admin deleted update id: ' . (int)$d['id'] . ' from IP: ' . get_ip());
         json_response(['ok' => true]);
 
     /* -- PHOTOS -- */
@@ -166,7 +178,7 @@ switch ($action) {
 
         // Check file was received
         if (empty($_FILES['photo'])) {
-            error_log(implode(' | ', $log) . ' | ERROR: No file received');
+            jhs_log(LOG_ERR, implode(' | ', $log) . ' | ERROR: No file received');
             json_response(['error' => 'No file received', 'log' => $log], 400);
         }
 
@@ -189,7 +201,7 @@ switch ($action) {
             ];
             $msg = $upload_errors[$file['error']] ?? 'Unknown upload error code: ' . $file['error'];
             $log[] = '[upload_photo] ERROR: PHP upload error - ' . $msg;
-            error_log(implode(' | ', $log));
+            jhs_log(LOG_ERR, implode(' | ', $log));
             json_response(['error' => $msg, 'log' => $log], 400);
         }
         $log[] = '[upload_photo] No PHP upload errors';
@@ -198,7 +210,7 @@ switch ($action) {
         $max_size = 10 * 1024 * 1024;
         if ($file['size'] > $max_size) {
             $log[] = '[upload_photo] ERROR: File too large - ' . $file['size'] . ' bytes (max ' . $max_size . ')';
-            error_log(implode(' | ', $log));
+            jhs_log(LOG_ERR, implode(' | ', $log));
             json_response(['error' => 'File too large (max 10MB)', 'log' => $log], 400);
         }
         $log[] = '[upload_photo] Size check passed: ' . $file['size'] . ' bytes';
@@ -212,7 +224,7 @@ switch ($action) {
 
         if (!isset($allowed_types[$mime])) {
             $log[] = '[upload_photo] ERROR: MIME type not allowed - ' . $mime;
-            error_log(implode(' | ', $log));
+            jhs_log(LOG_ERR, implode(' | ', $log));
             json_response(['error' => 'Invalid file type: ' . $mime . ' (allowed: jpeg, png, gif, webp)', 'log' => $log], 400);
         }
 
@@ -239,7 +251,7 @@ switch ($action) {
         // Move file
         if (!move_uploaded_file($file['tmp_name'], $dest)) {
             $log[] = '[upload_photo] ERROR: move_uploaded_file failed';
-            error_log(implode(' | ', $log));
+            jhs_log(LOG_ERR, implode(' | ', $log));
             json_response(['error' => 'Failed to save file', 'log' => $log], 500);
         }
         $log[] = '[upload_photo] File saved successfully';
@@ -252,7 +264,7 @@ switch ($action) {
         $s->execute([$caption, $uploader, $filename]);
         $log[] = '[upload_photo] DB insert successful - photo ID: ' . db()->lastInsertId();
 
-        error_log(implode(' | ', $log));
+        jhs_log(LOG_INFO, implode(' | ', $log));
         json_response(['ok' => true, 'url' => '/uploads/' . $filename, 'log' => $log]);
 
     case 'delete_photo':
@@ -266,26 +278,28 @@ switch ($action) {
             @unlink(UPLOAD_DIR . $photo['filename']);
         }
         db()->prepare('DELETE FROM photos WHERE id=?')->execute([(int)$d['id']]);
+        jhs_log(LOG_NOTICE, '[delete_photo] Admin deleted photo id: ' . (int)$d['id'] . ' from IP: ' . get_ip());
         json_response(['ok' => true]);
 
     /* -- ADMIN AUTH -- */
     case 'admin_login':
         session_start();
-        // Brute force protection: 5 attempts per IP per 15 minutes
         rate_limit('admin_login_' . get_ip(), 5, 900);
         $d = get_json();
         if (hash_equals(ADMIN_PASSWORD, $d['password'] ?? '')) {
             session_regenerate_id(true);
             $_SESSION['admin'] = true;
+            jhs_log(LOG_NOTICE, '[admin_login] SUCCESS from IP: ' . get_ip());
             json_response(['ok' => true]);
         } else {
-            // Consistent timing to prevent timing attacks
             usleep(500000);
+            jhs_log(LOG_WARNING, '[admin_login] FAILED from IP: ' . get_ip());
             json_response(['error' => 'Incorrect password'], 401);
         }
 
     case 'admin_logout':
         session_start();
+        jhs_log(LOG_NOTICE, '[admin_logout] Admin logged out from IP: ' . get_ip());
         session_destroy();
         json_response(['ok' => true]);
 

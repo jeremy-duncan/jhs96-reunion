@@ -26,6 +26,11 @@ Header always unset Server
     Require all denied
 </FilesMatch>
 
+# Block markdown docs from public access
+<FilesMatch "^(README|MAINTENANCE)\.md$">
+    Require all denied
+</FilesMatch>
+
 # Cache static assets
 <FilesMatch "\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|woff2)$">
     Header set Cache-Control "max-age=2592000, public"

@@ -28,6 +28,28 @@ function jhs_log($level, $message) {
 }
 
 /* -- EMAIL NOTIFICATIONS -- */
+function jhs_notify($subject, $body) {
+    try {
+        require_once __DIR__ . '/vendor/autoload.php';
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host       = '192.178.20.72';
+        $mail->Port       = 25;
+        $mail->SMTPAuth   = false;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->setFrom('noreply@judson96.org', 'JHS96 Reunion');
+        $mail->addAddress('staff@judson96.org');
+        $mail->Subject = '[JHS96] ' . $subject;
+        $mail->isHTML(false);
+        $mail->Body = $body . "\n\n--\nSent automatically by judson96.org";
+        $mail->send();
+        jhs_log(LOG_INFO, '[notify] Email sent: ' . $subject);
+    } catch (Exception $e) {
+        jhs_log(LOG_ERR, '[notify] Email failed: ' . $subject . ' - ' . $e->getMessage());
+    }
+}
+
+/* -- EMAIL NOTIFICATIONS -- */
 define('NOTIFY_TO',    'staff@judson96.org');
 define('NOTIFY_FROM',  'noreply@judson96.org');
 define('SITE_NAME',    'JHS96 30th Reunion');

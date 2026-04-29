@@ -28,19 +28,116 @@ function jhs_log($level, $message) {
 }
 
 /* -- EMAIL NOTIFICATIONS -- */
-define('NOTIFY_TO',   'staff@judson96.org');
-define('NOTIFY_FROM', 'noreply@judson96.org');
-define('SITE_NAME',   'JHS96 30th Reunion');
+define('NOTIFY_TO',    'staff@judson96.org');
+define('NOTIFY_FROM',  'noreply@judson96.org');
+define('SITE_NAME',    'JHS96 30th Reunion');
+define('SMTP_HOST',    '192.178.20.72');
+define('SMTP_PORT',    25);
 
-function send_notification($subject, $html_body) {
-    $headers = implode("\r\n", [
-        'From: ' . SITE_NAME . ' <' . NOTIFY_FROM . '>',
-        'Reply-To: ' . NOTIFY_FROM,
+function smtp_send($to, $subject, $html_body) {
+    $from = NOTIFY_FROM;
+    $host = SMTP_HOST;
+    $port = SMTP_PORT;
+
+    $errno = 0; $errstr = '';
+    $sock = @fsockopen($host, $port, $errno, $errstr, 10);
+    if (!$sock) {
+        jhs_log(LOG_ERR, '[email] SMTP connect failed: ' . $errstr . ' (' . $errno . ')');
+        return false;
+    }
+
+    $read = function() use ($sock) {
+        $r = '';
+        while (!feof($sock)) {
+            $line = fgets($sock, 512);
+            $r .= $line;
+            if (isset($line[3]) && $line[3] === ' ') break;
+        }
+        return $r;
+    };
+
+    $send = function($cmd) use ($sock) { fwrite($sock, $cmd . "\r\n"); };
+
+    // Read greeting
+    $resp = $read();
+    if (substr($resp, 0, 3) !== '220') {
+        jhs_log(LOG_ERR, '[email] SMTP bad greeting: ' . trim($resp));
+        fclose($sock); return false;
+    }
+
+    // EHLO
+    $send('EHLO judson96.org');
+    $ehlo = $read();
+
+    // STARTTLS
+    $send('STARTTLS');
+    $tls = $read();
+    if (substr($tls, 0, 3) !== '220') {
+        jhs_log(LOG_ERR, '[email] STARTTLS failed: ' . trim($tls));
+        fclose($sock); return false;
+    }
+
+    // Upgrade to TLS
+    stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+
+    // EHLO again after TLS
+    $send('EHLO judson96.org');
+    $read();
+
+    // MAIL FROM
+    $send('MAIL FROM:<' . $from . '>');
+    $r = $read();
+    if (substr($r, 0, 3) !== '250') {
+        jhs_log(LOG_ERR, '[email] MAIL FROM rejected: ' . trim($r));
+        fclose($sock); return false;
+    }
+
+    // RCPT TO
+    $send('RCPT TO:<' . $to . '>');
+    $r = $read();
+    if (substr($r, 0, 3) !== '250') {
+        jhs_log(LOG_ERR, '[email] RCPT TO rejected: ' . trim($r));
+        fclose($sock); return false;
+    }
+
+    // DATA
+    $send('DATA');
+    $r = $read();
+    if (substr($r, 0, 3) !== '354') {
+        jhs_log(LOG_ERR, '[email] DATA rejected: ' . trim($r));
+        fclose($sock); return false;
+    }
+
+    // Headers + body
+    $date    = date('r');
+    $msgid   = '<' . uniqid('jhs96.', true) . '@judson96.org>';
+    $message = implode("\r\n", [
+        'Date: '         . $date,
+        'From: '         . SITE_NAME . ' <' . $from . '>',
+        'To: '           . $to,
+        'Message-ID: '   . $msgid,
+        'Subject: '      . '[JHS96] ' . $subject,
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8',
-        'X-Mailer: PHP/' . phpversion(),
+        'Content-Transfer-Encoding: quoted-printable',
+        '',
+        quoted_printable_encode($html_body),
+        '.',
     ]);
-    $result = @mail(NOTIFY_TO, '[JHS96] ' . $subject, $html_body, $headers);
+    $send($message);
+    $r = $read();
+    if (substr($r, 0, 3) !== '250') {
+        jhs_log(LOG_ERR, '[email] Message rejected: ' . trim($r));
+        fclose($sock); return false;
+    }
+
+    $send('QUIT');
+    fclose($sock);
+    return true;
+}
+
+function send_notification($subject, $html_body) {
+    $result = smtp_send(NOTIFY_TO, $subject, $html_body);
     jhs_log($result ? LOG_INFO : LOG_WARNING,
         '[email] ' . ($result ? 'SENT' : 'FAILED') . ' subject: ' . $subject);
 }

@@ -53,7 +53,7 @@ function jhs_notify($subject, $body) {
 define('NOTIFY_TO',    'staff@judson96.org');
 define('NOTIFY_FROM',  'noreply@judson96.org');
 define('SITE_NAME',    'JHS96 30th Reunion');
-define('SMTP_HOST',    '192.178.20.72');
+define('SMTP_HOST',    '192.168.20.72');
 define('SMTP_PORT',    25);
 
 function smtp_send($to, $subject, $html_body) {

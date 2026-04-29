@@ -27,6 +27,78 @@ function jhs_log($level, $message) {
     closelog();
 }
 
+/* -- EMAIL NOTIFICATIONS -- */
+define('NOTIFY_TO',   'staff@judson96.org');
+define('NOTIFY_FROM', 'noreply@judson96.org');
+define('SITE_NAME',   'JHS96 30th Reunion');
+
+function send_notification($subject, $html_body) {
+    $headers = implode("\r\n", [
+        'From: ' . SITE_NAME . ' <' . NOTIFY_FROM . '>',
+        'Reply-To: ' . NOTIFY_FROM,
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=UTF-8',
+        'X-Mailer: PHP/' . phpversion(),
+    ]);
+    $result = @mail(NOTIFY_TO, '[JHS96] ' . $subject, $html_body, $headers);
+    jhs_log($result ? LOG_INFO : LOG_WARNING,
+        '[email] ' . ($result ? 'SENT' : 'FAILED') . ' subject: ' . $subject);
+}
+
+function btn($text) {
+    return "<div style='margin-top:20px;text-align:center;'><a href='https://judson96.org/admin' style='background:#C9973A;color:#fff;padding:10px 24px;text-decoration:none;border-radius:4px;font-weight:bold;display:inline-block;'>" . $text . "</a></div>";
+}
+
+function email_wrap($title, $content) {
+    return "<html><body style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;'>
+<div style='background:#8B1A1A;padding:20px;text-align:center;'>
+  <h1 style='color:#fff;margin:0;font-size:1.3rem;'>" . $title . "</h1>
+</div>
+<div style='padding:24px;background:#f9f5ee;'>" . $content . btn('View in Admin Panel') . "</div>
+<div style='padding:12px;text-align:center;color:#999;font-size:0.8rem;'>judson96.org &mdash; JHS Class of 1996</div>
+</body></html>";
+}
+
+function row($label, $value) {
+    return "<tr><td style='padding:8px 0;color:#666;width:130px;vertical-align:top;'>" . $label . "</td>
+            <td style='padding:8px 0;font-weight:bold;'>" . htmlspecialchars((string)$value) . "</td></tr>";
+}
+
+function notify_rsvp($name, $location, $guests, $attending, $note) {
+    $badge = $attending === 'yes' ? '✅ Attending' : '🤔 Maybe';
+    $content = "<table style='width:100%;border-collapse:collapse;'>"
+        . row('Name', $name)
+        . row('Status', $badge)
+        . row('Location', $location ?: '—')
+        . row('Guests', $guests)
+        . row('Note', $note ?: '—')
+        . "</table>";
+    send_notification('New RSVP from ' . $name, email_wrap('New RSVP &mdash; JHS96 Reunion', $content));
+}
+
+function notify_update($name, $location, $body) {
+    $content = "<table style='width:100%;border-collapse:collapse;'>"
+        . row('From', $name)
+        . row('Location', $location ?: '—')
+        . "</table>
+        <div style='margin-top:16px;padding:16px;background:#fff;border-left:4px solid #8B1A1A;border-radius:2px;'>
+          <p style='margin:0;line-height:1.6;'>" . nl2br(htmlspecialchars($body)) . "</p>
+        </div>";
+    send_notification('New Class Update from ' . $name, email_wrap('New Class Update &mdash; JHS96 Reunion', $content));
+}
+
+function notify_photo($caption, $uploader, $url) {
+    $img_url = 'https://judson96.org' . htmlspecialchars($url);
+    $content = "<table style='width:100%;border-collapse:collapse;'>"
+        . row('Uploaded by', $uploader)
+        . row('Caption', $caption ?: '—')
+        . "</table>
+        <div style='margin-top:16px;text-align:center;'>
+          <img src='" . $img_url . "' style='max-width:100%;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.15);'>
+        </div>";
+    send_notification('New Photo from ' . $uploader, email_wrap('New Photo &mdash; JHS96 Reunion', $content));
+}
+
 /* -- RATE LIMITING -- */
 function rate_limit($key, $max, $window_seconds) {
     $file = sys_get_temp_dir() . '/rl_' . md5($key) . '.json';
@@ -122,6 +194,7 @@ switch ($action) {
         $s = db()->prepare('INSERT INTO rsvps (name,email,location,guests,attending,note) VALUES (?,?,?,?,?,?)');
         $s->execute([$name,$email,$loc,$guests,$attending,$note]);
         jhs_log(LOG_INFO, '[submit_rsvp] New RSVP from IP: ' . get_ip() . ' name: ' . $name . ' attending: ' . $attending);
+        notify_rsvp($name, $loc, $guests, $attending, $note);
         json_response(['ok' => true]);
 
     case 'delete_rsvp':
@@ -148,6 +221,7 @@ switch ($action) {
         $s = db()->prepare('INSERT INTO updates_feed (name,location,body) VALUES (?,?,?)');
         $s->execute([$name,$loc,$body]);
         jhs_log(LOG_INFO, '[submit_update] New update from IP: ' . get_ip() . ' name: ' . $name);
+        notify_update($name, $loc, $body);
         json_response(['ok' => true]);
 
     case 'delete_update':
@@ -264,6 +338,7 @@ switch ($action) {
         $s->execute([$caption, $uploader, $filename]);
         $log[] = '[upload_photo] DB insert successful - photo ID: ' . db()->lastInsertId();
 
+        notify_photo($caption, $uploader, '/uploads/' . $filename);
         jhs_log(LOG_INFO, implode(' | ', $log));
         json_response(['ok' => true, 'url' => '/uploads/' . $filename, 'log' => $log]);
 

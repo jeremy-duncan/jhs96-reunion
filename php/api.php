@@ -99,7 +99,10 @@ function smtp_send($to, $subject, $html_body) {
         fclose($sock); return false;
     }
 
-    // Upgrade to TLS
+    // Upgrade to TLS - disable CA verification for internal relay
+    stream_context_set_option($sock, 'ssl', 'verify_peer', false);
+    stream_context_set_option($sock, 'ssl', 'verify_peer_name', false);
+    stream_context_set_option($sock, 'ssl', 'allow_self_signed', true);
     stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 
     // EHLO again after TLS

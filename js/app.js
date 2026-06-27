@@ -86,54 +86,6 @@ async function loadEvents() {
   } catch(e) { console.error('loadEvents:', e); }
 }
 
-/* -- RSVP -- */
-async function loadRsvps() {
-  try {
-    const res = await fetch(API + '?action=get_rsvps');
-    const d = await res.json();
-    document.getElementById('rsvp-count-yes').textContent = parseInt(d.yes) || 0;
-    document.getElementById('rsvp-count-maybe').textContent = parseInt(d.maybe) || 0;
-    document.getElementById('rsvp-count-guests').textContent = parseInt(d.guests) || 0;
-    const list = document.getElementById('rsvp-list');
-    if (!list) return;
-    list.innerHTML = (d.rsvps || []).map(r => `
-      <div class="rsvp-item">
-        <div class="rsvp-avatar">${esc(initials(r.name))}</div>
-        <div class="rsvp-info">
-          <strong>${esc(r.name)}</strong>
-          <span>${esc(r.location || '')}${r.guests > 1 ? ' - ' + parseInt(r.guests) + ' guests' : ''}</span>
-        </div>
-        <div class="rsvp-badge ${r.attending === 'maybe' ? 'maybe' : ''}">${r.attending === 'yes' ? 'Attending' : 'Maybe'}</div>
-      </div>`).join('');
-  } catch(e) { console.error('loadRsvps:', e); }
-}
-
-async function submitRsvp() {
-  const name = document.getElementById('rsvp-name').value.trim();
-  const email = document.getElementById('rsvp-email').value.trim();
-  if (!name || !email) { showToast('Please enter your name and email.'); return; }
-  const data = {
-    name, email,
-    location: document.getElementById('rsvp-location').value.trim(),
-    guests: parseInt(document.getElementById('rsvp-guests').value) || 1,
-    attending: document.getElementById('rsvp-attending').value,
-    note: document.getElementById('rsvp-note').value.trim()
-  };
-  try {
-    const res = await fetch(API + '?action=submit_rsvp', { method: 'POST', body: JSON.stringify(data) });
-    const result = await res.json();
-    if (result.ok) {
-      ['rsvp-name','rsvp-email','rsvp-location','rsvp-note'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('rsvp-guests').value = '1';
-      document.getElementById('rsvp-attending').value = 'yes';
-      loadRsvps();
-      showToast('Thanks ' + name.split(' ')[0] + '! Your RSVP has been saved!');
-    } else {
-      showToast(result.error || 'Something went wrong.');
-    }
-  } catch(e) { showToast('Connection error. Please try again.'); }
-}
-
 /* -- CLASS UPDATES -- */
 async function loadUpdates() {
   try {
@@ -280,6 +232,5 @@ async function handleUpload(e) {
 
 /* -- INIT -- */
 loadEvents();
-loadRsvps();
 loadUpdates();
 loadPhotos();

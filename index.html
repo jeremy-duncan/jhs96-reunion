@@ -20,7 +20,7 @@
   <div class="nav-links">
     <a data-page="home"    onclick="showPage('home')"    class="active">Home</a>
     <a data-page="events"  onclick="showPage('events')">Events</a>
-    <a data-page="rsvp"    onclick="showPage('rsvp')">RSVP</a>
+    <a href="https://www.eventbrite.com/e/judson-30-year-reunion-tickets-1992600747475" target="_blank" rel="noopener noreferrer">RSVP</a>
     <a data-page="updates" onclick="showPage('updates')">Class Updates</a>
     <a data-page="photos"  onclick="showPage('photos')">Photos</a>
   </div>
@@ -39,7 +39,7 @@
     <h1>Judson High School<br><em>30th Reunion</em></h1>
     <p class="hero-sub">Come back home to the San Antonio area — let's celebrate how far we've flown.</p>
     <div class="hero-actions">
-      <button class="btn-primary" onclick="showPage('rsvp')">RSVP Now</button>
+      <a href="https://www.eventbrite.com/e/judson-30-year-reunion-tickets-1992600747475" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-block; text-decoration:none;">RSVP Now</a>
       <button class="btn-outline" onclick="showPage('events')">See Events</button>
     </div>
   </div>
@@ -107,68 +107,21 @@
     <div class="section-head">
       <h2>RSVP</h2>
       <div class="section-rule"></div>
-      <p>Let us know you're coming! Your response helps the committee plan food, space, and seating.</p>
+      <p>Tickets and RSVPs are handled through Eventbrite. Click the button below to reserve your spot!</p>
     </div>
-
-    <div class="rsvp-wrap">
-      <div class="form-card">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Full Name *</label>
-            <input type="text" id="rsvp-name" placeholder="Your name (or maiden name)">
-          </div>
-          <div class="form-group">
-            <label>Email *</label>
-            <input type="email" id="rsvp-email" placeholder="your@email.com">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>City, State</label>
-            <input type="text" id="rsvp-location" placeholder="e.g. San Antonio, TX">
-          </div>
-          <div class="form-group">
-            <label>Number of Guests</label>
-            <select id="rsvp-guests">
-              <option value="1">Just me</option>
-              <option value="2">2 (me + 1)</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5+</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Attending?</label>
-          <select id="rsvp-attending">
-            <option value="yes">Yes, I'll be there! 🎉</option>
-            <option value="maybe">Maybe — I'll try to make it</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>A Note for Your Classmates (optional)</label>
-          <textarea id="rsvp-note" placeholder="Share a quick hello, a memory, or what you've been up to..."></textarea>
-        </div>
-        <button class="btn-primary" onclick="submitRsvp()" style="width: 100%;">Submit RSVP</button>
+    <div style="text-align:center; padding: 3rem 1rem;">
+      <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:3rem 2rem; max-width:520px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+        <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
+        <h3 style="font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--crimson); margin-bottom:0.75rem;">Judson 30-Year Reunion</h3>
+        <p style="color:var(--muted); margin-bottom:2rem; font-size:0.95rem;">Reserve your spot through our official Eventbrite page. Tickets, guest info, and payment are all handled there.</p>
+        <a href="https://www.eventbrite.com/e/judson-30-year-reunion-tickets-1992600747475"
+           target="_blank" rel="noopener noreferrer"
+           style="display:inline-block; background:var(--crimson); color:#fff; font-weight:700; font-size:1rem; letter-spacing:0.08em; text-transform:uppercase; text-decoration:none; padding:1rem 2.5rem; border-radius:6px; transition:background 0.2s;"
+           onmouseover="this.style.background='#6a1212'" onmouseout="this.style.background='var(--crimson)'">
+          Register on Eventbrite →
+        </a>
+        <p style="margin-top:1.5rem; font-size:0.8rem; color:var(--muted);">You'll be taken to Eventbrite to complete your registration.</p>
       </div>
-
-      <!-- RSVP Stats -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2rem 0 1.5rem;">
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center;">
-          <div style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--crimson);" id="rsvp-count-yes">0</div>
-          <div style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Attending</div>
-        </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center;">
-          <div style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold);" id="rsvp-count-maybe">0</div>
-          <div style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Maybe</div>
-        </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center;">
-          <div style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--dark);" id="rsvp-count-guests">0</div>
-          <div style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Total Guests</div>
-        </div>
-      </div>
-
-      <div class="rsvp-list" id="rsvp-list"></div>
     </div>
   </div>
 </div>

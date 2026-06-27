@@ -262,13 +262,20 @@ function sanitize_html($val, $max = 1000) {
     $val = strip_tags($val, '<a>');
     // Force all links to be safe: only allow href, add target+rel
     $val = preg_replace_callback('/<a\s[^>]*>/i', function($m) {
-        // Extract href value only
         preg_match('/href=["\']([^"\'<>]*)["\']/', $m[0], $href);
         $url = isset($href[1]) ? htmlspecialchars($href[1], ENT_QUOTES) : '#';
-        // Only allow http/https URLs
         if (!preg_match('/^https?:\/\//i', $url)) return '';
         return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">';
     }, $val);
+    // Auto-link raw URLs not already inside an <a> tag
+    $val = preg_replace_callback(
+        '/(?<!href=["\'])(?<!">)(https?:\/\/[^\s<>"\']+)/i',
+        function($m) {
+            $url = htmlspecialchars($m[1], ENT_QUOTES);
+            return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $url . '</a>';
+        },
+        $val
+    );
     return mb_substr($val, 0, $max);
 }
 

@@ -80,9 +80,14 @@ async function loadEvents() {
         <div class="event-body">
           <h3>${esc(ev.name)}</h3>
           <div class="event-meta">${esc(ev.timeloc)}</div>
-          <p>${esc(ev.description)}</p>
+          <p class="ev-desc"></p>
         </div>
       </div>`).join('');
+  // Set descriptions via textContent/innerHTML safely
+  events.forEach(ev => {
+    const el = document.querySelector(`#event-${parseInt(ev.id)} .ev-desc`);
+    if (el) el.innerHTML = ev.description || '';
+  });
   } catch(e) { console.error('loadEvents:', e); }
 }
 
@@ -102,8 +107,13 @@ async function loadUpdates() {
             <span>${esc(u.location || '')} - ${new Date(u.created_at).toLocaleDateString('en-US', {month:'long', year:'numeric'})}</span>
           </div>
         </div>
-        <p>${esc(u.body)}</p>
+        <p class="upd-body"></p>
       </div>`).join('');
+  // Set bodies via innerHTML safely (server already stripped dangerous tags)
+  rows.forEach((u, i) => {
+    const el = feed.querySelectorAll('.upd-body')[i];
+    if (el) el.innerHTML = u.body || '';
+  });
   } catch(e) { console.error('loadUpdates:', e); }
 }
 

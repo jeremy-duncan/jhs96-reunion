@@ -256,6 +256,22 @@ function sanitize_str($val, $max = 255) {
     return mb_substr(strip_tags(trim((string)($val ?? ''))), 0, $max);
 }
 
+function sanitize_html($val, $max = 1000) {
+    // Allow only <a href="..."> tags, strip everything else
+    $val = trim((string)($val ?? ''));
+    $val = strip_tags($val, '<a>');
+    // Force all links to be safe: only allow href, add target+rel
+    $val = preg_replace_callback('/<a\s[^>]*>/i', function($m) {
+        // Extract href value only
+        preg_match('/href=["\']([^"\'<>]*)["\']/', $m[0], $href);
+        $url = isset($href[1]) ? htmlspecialchars($href[1], ENT_QUOTES) : '#';
+        // Only allow http/https URLs
+        if (!preg_match('/^https?:\/\//i', $url)) return '';
+        return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">';
+    }, $val);
+    return mb_substr($val, 0, $max);
+}
+
 $action = $_GET['action'] ?? '';
 
 switch ($action) {
@@ -274,7 +290,7 @@ switch ($action) {
         $day     = (int)($d['day'] ?? 0);
         $year    = (int)($d['year'] ?? 2026);
         $timeloc = sanitize_str($d['timeloc'] ?? '', 255);
-        $desc    = sanitize_str($d['desc'] ?? '', 1000);
+        $desc    = sanitize_html($d['desc'] ?? '', 1000);
         if (!$name || !$month || !$day) json_response(['error' => 'Name, month and day required'], 400);
         if (!empty($d['id'])) {
             $s = db()->prepare('UPDATE events SET name=?,month=?,day=?,year=?,timeloc=?,description=? WHERE id=?');
@@ -338,7 +354,7 @@ switch ($action) {
         $d    = get_json();
         $name = sanitize_str($d['name'] ?? '', 255);
         $loc  = sanitize_str($d['location'] ?? '', 255);
-        $body = sanitize_str($d['body'] ?? '', 1000);
+        $body = sanitize_html($d['body'] ?? '', 1000);
         if (!$name || !$body) json_response(['error' => 'Name and update required'], 400);
         $s = db()->prepare('INSERT INTO updates_feed (name,location,body) VALUES (?,?,?)');
         $s->execute([$name,$loc,$body]);

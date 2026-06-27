@@ -259,7 +259,7 @@ function sanitize_str($val, $max = 255) {
 function sanitize_html($val, $max = 1000) {
     // Allow only <a href="..."> tags, strip everything else
     $val = trim((string)($val ?? ''));
-    $val = strip_tags($val, '<a>');
+    $val = strip_tags($val, '<a><br>');
     // Force all links to be safe: only allow href, add target+rel
     $val = preg_replace_callback('/<a\s[^>]*>/i', function($m) {
         preg_match('/href=["\']([^"\'<>]*)["\']/', $m[0], $href);
